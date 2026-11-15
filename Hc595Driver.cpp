@@ -18,6 +18,7 @@
 Hc595Driver::Hc595Driver()
     : ds_pin_(0), shcp_pin_(0), stcp_pin_(0), num_chips_(0),
       initialized_(false),
+      leds_(nullptr), led_count_(0), led_flow_idx_(0),
       flow_enabled_(false), flow_start_(0), flow_count_(0),
       flow_delay_ms_(0), flow_bounce_(false),
       flow_idx_(0), flow_dir_(1), flow_last_ms_(0)
@@ -280,4 +281,66 @@ void Hc595Driver::loop()
     int q    = bit % 8;
     current_output_[chip] |= (1 << q);
     refresh_hw_();
+}
+
+// ============================================================
+// ★ v2.0.0 新增：带 LedMap 的 begin() 重载 + 效果函数
+// ============================================================
+
+int Hc595Driver::begin(int ds, int shcp, int stcp, int num_chips,
+                       const LedMap *leds, int led_count)
+{
+    int ret = begin(ds, shcp, stcp, num_chips);   // 调基础版 begin()
+    if (ret != 0) return ret;
+    leds_         = leds;
+    led_count_    = led_count;
+    led_flow_idx_ = 0;
+    return 0;
+}
+
+int Hc595Driver::begin(const Hc595Config &cfg)
+{
+    return begin(cfg.ds, cfg.shcp, cfg.stcp, cfg.num_chips);
+}
+
+int Hc595Driver::begin(const Hc595Config &cfg, const LedMap *leds, int led_count)
+{
+    return begin(cfg.ds, cfg.shcp, cfg.stcp, cfg.num_chips, leds, led_count);
+}
+
+void Hc595Driver::self_test()
+{
+    if (!initialized_ || leds_ == nullptr) return;
+    for (int i = 0; i < led_count_; i++) {
+        set_chip_q(leds_[i].chip, leds_[i].q);
+        Serial.printf("  LED%d (U%d.Q%d)\n", i + 1, leds_[i].chip + 1, leds_[i].q);
+        delay(800);
+        clear();
+        delay(200);
+    }
+}
+
+void Hc595Driver::water_flow()
+{
+    if (!initialized_ || leds_ == nullptr) return;
+    set_chip_q(leds_[led_flow_idx_].chip, leds_[led_flow_idx_].q);
+    Serial.printf("LED%d 亮 (U%d.Q%d)\n", led_flow_idx_ + 1, leds_[led_flow_idx_].chip + 1, leds_[led_flow_idx_].q);
+    delay(500);
+    clear();
+    delay(200);
+    led_flow_idx_ = (led_flow_idx_ + 1) % led_count_;
+}
+
+void Hc595Driver::led_on(int index)
+{
+    if (!initialized_ || leds_ == nullptr) return;
+    if (index < 0 || index >= led_count_) return;
+    set_chip_q(leds_[index].chip, leds_[index].q);
+}
+
+void Hc595Driver::led_off(int index)
+{
+    if (!initialized_ || leds_ == nullptr) return;
+    if (index < 0 || index >= led_count_) return;
+    clr_chip_q(leds_[index].chip, leds_[index].q);
 }
