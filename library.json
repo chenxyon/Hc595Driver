@@ -1,9 +1,9 @@
 {
     "name": "Hc595Driver",
-    "version": "1.0.0",
-    "description": "74HC595 串入并出移位寄存器驱动（Arduino 框架）。支持多片级联、单 bit 置位/清零/翻转、流水灯模式。",
+    "version": "2.0.0",
+    "description": "74HC595 串入并出移位寄存器驱动（Arduino 框架）。v2.0.0 新增数组方式 API，支持无限片级联（MAX_CHIPS=32），完全兼容 v1.0.0 旧 API。",
     "keywords": "74HC595, shift register, LED, 595, 流水灯",
-    "author": "your-name",
+    "author": "chenxyon",
     "license": "MIT",
     "frameworks": "arduino",
     "platforms": ["espressif32", "espressif8266", "atmelavr", "atmelmegaavr", "ststm32"]
